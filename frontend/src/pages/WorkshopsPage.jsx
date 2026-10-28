@@ -11,6 +11,9 @@ export default function WorkshopsPage() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [notice, setNotice] = useState('');
   const fetchWorkshops = async (q = '') => {
     setLoading(true); setError('');
     try { const res = await api.get('/workshops', { params: q ? { search: q } : {} }); setWorkshops(res.data.data); }
@@ -19,10 +22,16 @@ export default function WorkshopsPage() {
   };
   useEffect(() => { fetchWorkshops(); }, []);
   const handleSearch = (e) => { e.preventDefault(); fetchWorkshops(search.trim()); };
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this workshop? Registrations will remain in history.')) return;
-    try { await api.delete(`/workshops/${id}`); setWorkshops((prev) => prev.filter((w) => w._id !== id)); }
-    catch (err) { setError(err.response?.data?.error || 'Could not delete this workshop.'); }
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true); setError('');
+    try {
+      await api.delete(`/workshops/${deleteTarget._id}`);
+      setWorkshops((prev) => prev.filter((w) => w._id !== deleteTarget._id));
+      setDeleteTarget(null); setNotice(`“${deleteTarget.name}” was removed.`);
+      window.setTimeout(() => setNotice(''), 4200);
+    } catch (err) { setError(err.response?.data?.error || 'Could not delete this workshop.'); setDeleteTarget(null); }
+    finally { setDeleting(false); }
   };
 
   return <div className="mx-auto max-w-7xl px-5 pb-20 pt-8 lg:px-8">
@@ -46,8 +55,19 @@ export default function WorkshopsPage() {
       return <article key={w._id} className="group overflow-hidden rounded-3xl border border-[#e5eae2] bg-white shadow-[0_8px_25px_rgba(34,57,42,.04)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(34,57,42,.1)]">
         <div className={`relative flex h-36 items-end overflow-hidden p-5 ${['bg-[#e5eee1]','bg-[#eee8dc]','bg-[#e4ebed]'][i%3]}`}><div className="absolute -right-5 -top-10 h-40 w-40 rounded-full border-[22px] border-white/30"/><div className="absolute right-10 top-5 h-20 w-20 rounded-full border border-white/70"/><span className="relative rounded-full bg-white/80 px-3 py-1.5 text-xs font-semibold text-[#486552] backdrop-blur">{dateLabel(w.workshopDate)}</span><span className="absolute right-5 top-5 text-3xl text-[#476750]/50">✳</span></div>
         <div className="p-5"><div className="mb-2 flex items-center gap-2 text-xs font-medium text-[#7c8a7f]"><span className="text-[#63826b]">◉</span>{w.instructor}</div><h3 className="line-clamp-2 min-h-[3.5rem] text-xl font-semibold leading-7 tracking-tight text-[#263a2d]">{w.name}</h3><p className="mt-2 flex items-center gap-2 text-sm text-[#738076]"><span>⌖</span>{w.location}</p><div className="mt-5 flex items-center justify-between border-t border-[#edf0eb] pt-4"><div className="text-xs text-[#829086]"><strong className="text-[#425f4b]">{spots}</strong> spots left <span className="mx-1">·</span> {w.capacity} seats</div><Link to={`/workshops/${w._id}`} className="rounded-full bg-[#edf3ec] px-4 py-2 text-sm font-semibold text-[#315a42] no-underline group-hover:bg-[#1c4836] group-hover:text-white">Explore →</Link></div>
-        {user?.role === 'admin' && <div className="mt-3 flex gap-4 text-xs"><Link className="text-[#8a7352] no-underline" to={`/workshops/${w._id}/edit`}>Edit workshop</Link><button onClick={()=>handleDelete(w._id)} className="text-red-600">Delete</button></div>}</div></article>;
+        {user?.role === 'admin' && <div className="mt-3 flex gap-4 text-xs"><Link className="text-[#8a7352] no-underline" to={`/workshops/${w._id}/edit`}>Edit workshop</Link><button onClick={()=>setDeleteTarget(w)} className="text-red-600">Delete</button></div>}</div></article>;
     })}</div>}
     <footer className="mt-16 border-t border-[#e1e7df] pt-6 text-center text-xs text-[#98a198]">Gatherspace · Learn something worth sharing</footer>
+    {notice && <div role="status" className="fixed bottom-6 right-6 z-30 flex items-center gap-3 rounded-2xl border border-[#dce8da] bg-white px-5 py-4 text-sm font-medium text-[#315c45] shadow-xl"><span className="grid h-7 w-7 place-items-center rounded-full bg-[#eaf3e9]">✓</span>{notice}</div>}
+    {deleteTarget && <div className="fixed inset-0 z-40 grid place-items-center bg-[#13251b]/45 px-4 py-6 backdrop-blur-sm" onMouseDown={(e)=>{if(e.target===e.currentTarget&&!deleting)setDeleteTarget(null);}}>
+      <section role="alertdialog" aria-modal="true" aria-labelledby="delete-workshop-title" aria-describedby="delete-workshop-description" className="w-full max-w-md rounded-[2rem] border border-white/70 bg-[#fbfcf8] p-6 shadow-2xl sm:p-8">
+        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#f8e9e5] text-xl text-[#ad6253]">⌫</div>
+        <p className="mt-5 text-[11px] font-bold uppercase tracking-[.2em] text-[#9a766d]">Remove workshop</p>
+        <h2 id="delete-workshop-title" className="mt-2 text-2xl font-semibold tracking-tight text-[#293b30]">Are you sure?</h2>
+        <p id="delete-workshop-description" className="mt-3 text-sm leading-6 text-[#718076]">You’re removing <strong className="text-[#405348]">{deleteTarget.name}</strong> from the workshop list. Existing registration records will remain available.</p>
+        {error && <p role="alert" className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
+        <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><button disabled={deleting} onClick={()=>setDeleteTarget(null)} className="rounded-full border border-[#dfe6dc] px-5 py-3 text-sm font-semibold text-[#52645a] disabled:opacity-50">Keep workshop</button><button disabled={deleting} onClick={handleDelete} className="rounded-full bg-[#a5534a] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#91453e] disabled:opacity-50">{deleting?'Removing…':'Yes, remove workshop'}</button></div>
+      </section>
+    </div>}
   </div>;
 }

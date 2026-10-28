@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import RegistrationsPage from './pages/RegistrationsPage';
+import RegistrationDetailPage from './pages/RegistrationDetailPage';
 import WorkshopDetailPage from './pages/WorkshopDetailPage';
 import WorkshopFormPage from './pages/WorkshopFormPage';
 import WorkshopsPage from './pages/WorkshopsPage';
@@ -35,6 +36,9 @@ export default function App() {
               {/* Authenticated */}
               <Route path="/registrations" element={
                 <ProtectedRoute><RegistrationsPage /></ProtectedRoute>
+              } />
+              <Route path="/registrations/:id" element={
+                <ProtectedRoute><RegistrationDetailPage /></ProtectedRoute>
               } />
             </Routes>
           </main>

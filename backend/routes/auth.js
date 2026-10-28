@@ -67,14 +67,6 @@
  *             "type": "string",
  *             "minLength": 6,
  *             "format": "password"
- *           },
- *           "role": {
- *             "type": "string",
- *             "enum": [
- *               "member",
- *               "admin"
- *             ],
- *             "default": "member"
  *           }
  *         },
  *         "required": [
@@ -409,7 +401,7 @@
  *         "Authentication"
  *       ],
  *       "summary": "Register a user",
- *       "description": "Public registration accepts member or admin roles and issues a JWT in data.token and an HTTP-only token cookie.",
+ *       "description": "Public registration always creates a member and issues a JWT in data.token and an HTTP-only token cookie.",
  *       "security": [],
  *       "responses": {
  *         "201": {
