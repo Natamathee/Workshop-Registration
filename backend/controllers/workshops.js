@@ -20,6 +20,20 @@ const parseWorkshopInput = ({ workshopDate, capacity }) => {
 
 const workshopFields = ({ name, description, instructor, location }) => ({ name, description, instructor, location });
 
+const addRegistrationCounts = async (workshops) => {
+  if (workshops.length === 0) return [];
+  const ids = workshops.map((workshop) => workshop._id);
+  const counts = await Registration.aggregate([
+    { $match: { workshop: { $in: ids } } },
+    { $group: { _id: "$workshop", count: { $sum: 1 } } },
+  ]);
+  const countByWorkshop = new Map(counts.map((item) => [item._id.toString(), item.count]));
+  return workshops.map((workshop) => ({
+    ...workshop.toObject(),
+    registrationCount: countByWorkshop.get(workshop._id.toString()) || 0,
+  }));
+};
+
 exports.getWorkshops = async (req, res, next) => {
   try {
     const filter = { isActive: true };
@@ -33,7 +47,8 @@ exports.getWorkshops = async (req, res, next) => {
       }));
     }
     const workshops = await Workshop.find(filter).sort({ workshopDate: 1, name: 1 });
-    res.status(200).json({ success: true, count: workshops.length, data: workshops });
+    const data = await addRegistrationCounts(workshops);
+    res.status(200).json({ success: true, count: data.length, data });
   } catch (error) {
     next(error);
   }
@@ -43,7 +58,8 @@ exports.getWorkshop = async (req, res, next) => {
   try {
     const workshop = await Workshop.findOne({ _id: req.params.id, isActive: true });
     if (!workshop) return res.status(404).json({ success: false, error: "Workshop not found" });
-    res.status(200).json({ success: true, data: workshop });
+    const registrationCount = await Registration.countDocuments({ workshop: workshop._id });
+    res.status(200).json({ success: true, data: { ...workshop.toObject(), registrationCount } });
   } catch (error) {
     next(error);
   }
