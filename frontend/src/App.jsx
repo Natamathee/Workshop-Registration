@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 import RegisterPage from './pages/RegisterPage';
 import RegistrationsPage from './pages/RegistrationsPage';
 import RegistrationDetailPage from './pages/RegistrationDetailPage';
@@ -26,6 +27,9 @@ export default function App() {
               <Route path="/workshops/:id" element={<WorkshopDetailPage />} />
 
               {/* Admin only */}
+              <Route path="/admin" element={
+                <ProtectedRoute role="admin"><AdminDashboardPage /></ProtectedRoute>
+              } />
               <Route path="/workshops/new" element={
                 <ProtectedRoute role="admin"><WorkshopFormPage /></ProtectedRoute>
               } />

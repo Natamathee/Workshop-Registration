@@ -25,8 +25,9 @@ export default function Navbar() {
 
           {user ? (
             <>
+              {user.role === 'admin' && <Link to="/admin" className="text-sm font-semibold text-[#315c45] no-underline hover:text-[#1c4836]">Dashboard</Link>}
               <Link to="/registrations" className="text-sm font-medium text-[#607167] no-underline hover:text-[#1c4836]">
-                My Registrations
+                {user.role === 'admin' ? 'Registrations' : 'My Registrations'}
               </Link>
               <span className="hidden items-center gap-2 text-sm text-[#607167] sm:flex">
                 <span className="grid h-8 w-8 place-items-center rounded-full bg-[#e6efe7] text-xs font-bold text-[#315c45]">{user.name?.slice(0,1)?.toUpperCase()}</span>
