@@ -5,6 +5,7 @@ const WorkshopSchema = new mongoose.Schema(
     name: { type: String, required: [true, "Please add a workshop name"], trim: true },
     description: { type: String, required: [true, "Please add a description"], trim: true },
     instructor: { type: String, required: [true, "Please add an instructor"], trim: true },
+    category: { type: String, enum: ["Technology", "Design", "Business", "Creative", "Wellness", "Other"], default: "Other" },
     workshopDate: { type: Date, required: [true, "Please add a workshop date"] },
     location: { type: String, required: [true, "Please add a location"], trim: true },
     capacity: {

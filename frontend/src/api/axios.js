@@ -21,6 +21,7 @@ api.interceptors.response.use(
     const isSignInRequest = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/register');
     if (error.response?.status === 401 && !isSignInRequest && localStorage.getItem('token')) {
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
       window.location.href = '/login';
     }
     return Promise.reject(error);

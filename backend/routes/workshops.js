@@ -7,7 +7,7 @@
  *         "Workshops"
  *       ],
  *       "summary": "List or search active workshops",
- *       "description": "Public list sorted by workshop date and name. Includes past workshops that have not been deleted.",
+ *       "description": "Public list of all active workshops, sorted by workshop date and name. Past workshops remain visible, but registrations are closed.",
  *       "security": [],
  *       "responses": {
  *         "200": {
@@ -58,6 +58,15 @@
  *           "description": "Case-insensitive literal substring in name, description, instructor, or location.",
  *           "schema": {
  *             "type": "string"
+ *           }
+ *         },
+ *         {
+ *           "name": "category",
+ *           "in": "query",
+ *           "description": "Filter by workshop category.",
+ *           "schema": {
+ *             "type": "string",
+ *             "enum": ["Technology", "Design", "Business", "Creative", "Wellness", "Other"]
  *           }
  *         }
  *       ]
@@ -138,7 +147,7 @@
  *         "Workshops"
  *       ],
  *       "summary": "Get workshop",
- *       "description": "Public detail for an active workshop.",
+ *       "description": "Public detail for any active workshop, including past workshops. Registration is unavailable after its date.",
  *       "security": [],
  *       "responses": {
  *         "200": {

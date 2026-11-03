@@ -1,7 +1,9 @@
 const Workshop = require("../models/Workshop");
 const Registration = require("../models/Registration");
 
-const parseWorkshopInput = ({ workshopDate, capacity }) => {
+const WORKSHOP_CATEGORIES = ["Technology", "Design", "Business", "Creative", "Wellness", "Other"];
+
+const parseWorkshopInput = ({ workshopDate, capacity, category }) => {
   if (typeof workshopDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(workshopDate)) {
     return { error: "A valid workshopDate in YYYY-MM-DD format is required" };
   }
@@ -15,10 +17,13 @@ const parseWorkshopInput = ({ workshopDate, capacity }) => {
   if (!Number.isInteger(capacity) || capacity < 1) {
     return { error: "Capacity must be a positive integer" };
   }
-  return { workshopDate: date, capacity };
+  if (category !== undefined && !WORKSHOP_CATEGORIES.includes(category)) {
+    return { error: `Category must be one of: ${WORKSHOP_CATEGORIES.join(", ")}` };
+  }
+  return { workshopDate: date, capacity, ...(category === undefined ? {} : { category }) };
 };
 
-const workshopFields = ({ name, description, instructor, location }) => ({ name, description, instructor, location });
+const workshopFields = ({ name, description, instructor, location, category }) => ({ name, description, instructor, location, category });
 
 const addRegistrationCounts = async (workshops) => {
   if (workshops.length === 0) return [];
@@ -37,14 +42,26 @@ const addRegistrationCounts = async (workshops) => {
 exports.getWorkshops = async (req, res, next) => {
   try {
     const filter = { isActive: true };
+    if (req.query.category !== undefined) {
+      if (typeof req.query.category !== "string" || !WORKSHOP_CATEGORIES.includes(req.query.category)) {
+        return res.status(400).json({ success: false, error: `category must be one of: ${WORKSHOP_CATEGORIES.join(", ")}` });
+      }
+      if (req.query.category === "Other") {
+        filter.$and = [...(filter.$and || []), { $or: [{ category: "Other" }, { category: { $exists: false } }] }];
+      } else {
+        filter.category = req.query.category;
+      }
+    }
     if (req.query.search !== undefined) {
       if (typeof req.query.search !== "string") {
         return res.status(400).json({ success: false, error: "search must be a string" });
       }
       const search = req.query.search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      filter.$or = ["name", "description", "instructor", "location"].map((field) => ({
+      const searchFilter = { $or: ["name", "description", "instructor", "location"].map((field) => ({
         [field]: { $regex: search, $options: "i" },
-      }));
+      })) };
+      if (filter.$and) filter.$and.push(searchFilter);
+      else filter.$or = searchFilter.$or;
     }
     const workshops = await Workshop.find(filter).sort({ workshopDate: 1, name: 1 });
     const data = await addRegistrationCounts(workshops);
@@ -83,6 +100,7 @@ exports.updateWorkshop = async (req, res, next) => {
     const parsed = parseWorkshopInput({
       workshopDate: req.body.workshopDate === undefined ? workshop.workshopDate.toISOString().slice(0, 10) : req.body.workshopDate,
       capacity: req.body.capacity === undefined ? workshop.capacity : req.body.capacity,
+      category: req.body.category === undefined ? (workshop.category || "Other") : req.body.category,
     });
     if (parsed.error) return res.status(400).json({ success: false, error: parsed.error });
     const count = await Registration.countDocuments({ workshop: workshop.id });

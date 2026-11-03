@@ -158,6 +158,11 @@
  *             "type": "string",
  *             "example": "Example Instructor"
  *           },
+ *           "category": {
+ *             "type": "string",
+ *             "enum": ["Technology", "Design", "Business", "Creative", "Wellness", "Other"],
+ *             "default": "Other"
+ *           },
  *           "workshopDate": {
  *             "type": "string",
  *             "format": "date",
@@ -197,6 +202,11 @@
  *             "type": "string",
  *             "example": "Example Instructor"
  *           },
+ *           "category": {
+ *             "type": "string",
+ *             "enum": ["Technology", "Design", "Business", "Creative", "Wellness", "Other"],
+ *             "default": "Other"
+ *           },
  *           "workshopDate": {
  *             "type": "string",
  *             "format": "date",
@@ -232,6 +242,11 @@
  *           "instructor": {
  *             "type": "string",
  *             "example": "Example Instructor"
+ *           },
+ *           "category": {
+ *             "type": "string",
+ *             "enum": ["Technology", "Design", "Business", "Creative", "Wellness", "Other"],
+ *             "default": "Other"
  *           },
  *           "workshopDate": {
  *             "type": "string",

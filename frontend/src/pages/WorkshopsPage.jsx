@@ -3,25 +3,27 @@ import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 
+const categories = ['Technology', 'Design', 'Business', 'Creative', 'Wellness', 'Other'];
 const dateLabel = (date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 
 export default function WorkshopsPage() {
   const { user } = useAuth();
   const [workshops, setWorkshops] = useState([]);
   const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [notice, setNotice] = useState('');
-  const fetchWorkshops = async (q = '') => {
+  const fetchWorkshops = async (q = '', selectedCategory = category) => {
     setLoading(true); setError('');
-    try { const res = await api.get('/workshops', { params: q ? { search: q } : {} }); setWorkshops(res.data.data); }
+    try { const params = {}; if (q) params.search = q; if (selectedCategory) params.category = selectedCategory; const res = await api.get('/workshops', { params }); setWorkshops(res.data.data); }
     catch (err) { setError(err.response?.data?.error || 'Could not load workshops. Check that the API is running.'); }
     finally { setLoading(false); }
   };
   useEffect(() => { fetchWorkshops(); }, []);
-  const handleSearch = (e) => { e.preventDefault(); fetchWorkshops(search.trim()); };
+  const handleSearch = (e) => { e.preventDefault(); fetchWorkshops(search.trim(), category); };
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true); setError('');
@@ -48,13 +50,14 @@ export default function WorkshopsPage() {
       </div>
       {user?.role === 'admin' && <Link to="/workshops/new" className="relative mt-5 inline-flex rounded-full border border-white/25 px-4 py-2 text-sm font-medium text-white no-underline hover:bg-white/10">＋ Create a workshop</Link>}
     </section>
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-3"><div><p className="mb-1 text-[11px] font-bold uppercase tracking-[.2em] text-[#789080]">The calendar</p><h2 className="text-2xl font-semibold tracking-tight text-[#23372b] sm:text-3xl">Upcoming workshops</h2></div><p className="text-sm text-[#78857b]">{workshops.length} {workshops.length === 1 ? 'experience' : 'experiences'}</p></div>
-    {error && <div role="alert" className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">{error}<button onClick={() => fetchWorkshops(search)} className="ml-3 font-semibold underline">Try again</button></div>}
-    {loading ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{[1,2,3].map((i)=><div key={i} className="h-72 animate-pulse rounded-3xl bg-[#e9eee7]"/> )}</div> : workshops.length === 0 ? <div className="rounded-3xl border border-dashed border-[#d4ddd3] bg-white/70 px-6 py-16 text-center"><span className="text-4xl">✳</span><h3 className="mt-4 text-lg font-semibold text-[#293b30]">No workshops found</h3><p className="mt-2 text-sm text-[#77857a]">Try a different search or check back soon for new sessions.</p>{search && <button onClick={()=>{setSearch('');fetchWorkshops();}} className="mt-5 rounded-full bg-[#e8efe7] px-4 py-2 text-sm font-semibold text-[#315c45]">Clear search</button>}</div> : <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{workshops.map((w, i)=>{
-      const count = w.registrationCount ?? 0; const spots = Math.max(0, Number(w.capacity)-Number(count));
+    <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><p className="mb-1 text-[11px] font-bold uppercase tracking-[.2em] text-[#789080]">The calendar</p><h2 className="text-2xl font-semibold tracking-tight text-[#23372b] sm:text-3xl">All workshops</h2></div><span className="w-fit rounded-full border border-[#e1e8df] bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-[#708074]">{workshops.length} {workshops.length === 1 ? 'experience' : 'experiences'}</span></div>
+    <div aria-label="Filter workshops by category" className="mb-8 flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{[['', 'All workshops'], ...categories.map((item) => [item, item])].map(([value, label]) => <button key={value || 'all'} type="button" aria-pressed={category === value} onClick={() => { setCategory(value); fetchWorkshops(search.trim(), value); }} className={`shrink-0 rounded-full border px-4 py-2.5 text-sm font-semibold transition duration-200 ${category === value ? 'border-[#1c4836] bg-[#1c4836] text-white shadow-md shadow-[#1c4836]/15' : 'border-[#e1e8df] bg-white/80 text-[#617267] hover:border-[#b9cab9] hover:bg-[#edf3ec] hover:text-[#315a42]'}`}>{label}</button>)}</div>
+    {error && <div role="alert" className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">{error}<button onClick={() => fetchWorkshops(search, category)} className="ml-3 font-semibold underline">Try again</button></div>}
+    {loading ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{[1,2,3].map((i)=><div key={i} className="h-72 animate-pulse rounded-3xl bg-[#e9eee7]"/> )}</div> : workshops.length === 0 ? <div className="rounded-3xl border border-dashed border-[#d4ddd3] bg-white/70 px-6 py-16 text-center"><span className="text-4xl">✳</span><h3 className="mt-4 text-lg font-semibold text-[#293b30]">No workshops found</h3><p className="mt-2 text-sm text-[#77857a]">Try a different search or check back soon for new sessions.</p>{(search || category) && <button onClick={()=>{setSearch('');setCategory('');fetchWorkshops('', '');}} className="mt-5 rounded-full bg-[#e8efe7] px-4 py-2 text-sm font-semibold text-[#315c45]">Clear filters</button>}</div> : <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{workshops.map((w, i)=>{
+      const count = w.registrationCount ?? 0; const spots = Math.max(0, Number(w.capacity)-Number(count)); const past = new Date(`${w.workshopDate.slice(0, 10)}T00:00:00.000Z`) < new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00.000Z');
       return <article key={w._id} className="group overflow-hidden rounded-3xl border border-[#e5eae2] bg-white shadow-[0_8px_25px_rgba(34,57,42,.04)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(34,57,42,.1)]">
         <div className={`relative flex h-36 items-end overflow-hidden p-5 ${['bg-[#e5eee1]','bg-[#eee8dc]','bg-[#e4ebed]'][i%3]}`}><div className="absolute -right-5 -top-10 h-40 w-40 rounded-full border-[22px] border-white/30"/><div className="absolute right-10 top-5 h-20 w-20 rounded-full border border-white/70"/><span className="relative rounded-full bg-white/80 px-3 py-1.5 text-xs font-semibold text-[#486552] backdrop-blur">{dateLabel(w.workshopDate)}</span><span className="absolute right-5 top-5 text-3xl text-[#476750]/50">✳</span></div>
-        <div className="p-5"><div className="mb-2 flex items-center gap-2 text-xs font-medium text-[#7c8a7f]"><span className="text-[#63826b]">◉</span>{w.instructor}</div><h3 className="line-clamp-2 min-h-[3.5rem] text-xl font-semibold leading-7 tracking-tight text-[#263a2d]">{w.name}</h3><p className="mt-2 flex items-center gap-2 text-sm text-[#738076]"><span>⌖</span>{w.location}</p><div className="mt-5 flex items-center justify-between border-t border-[#edf0eb] pt-4"><div className="text-xs text-[#829086]"><strong className="text-[#425f4b]">{spots}</strong> spots left <span className="mx-1">·</span> {w.capacity} seats</div><Link to={`/workshops/${w._id}`} className="rounded-full bg-[#edf3ec] px-4 py-2 text-sm font-semibold text-[#315a42] no-underline group-hover:bg-[#1c4836] group-hover:text-white">Explore →</Link></div>
+        <div className="p-5"><div className="mb-2 flex items-center gap-2 text-xs font-medium text-[#7c8a7f]"><span className="text-[#63826b]">◉</span>{w.instructor}</div><div className="mb-2 flex flex-wrap items-center gap-2"><span className="rounded-full bg-[#edf3ec] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#45644d]">{w.category || 'Other'}</span>{past && <span className="rounded-full bg-[#f2efeb] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#85796d]">Registration closed</span>}</div><h3 className="line-clamp-2 min-h-[3.5rem] text-xl font-semibold leading-7 tracking-tight text-[#263a2d]">{w.name}</h3><p className="mt-2 flex items-center gap-2 text-sm text-[#738076]"><span>⌖</span>{w.location}</p><div className="mt-5 flex items-center justify-between border-t border-[#edf0eb] pt-4"><div className="text-xs text-[#829086]">{past ? <span className="font-medium text-[#85796d]">Workshop ended</span> : <><strong className="text-[#425f4b]">{spots}</strong> spots left <span className="mx-1">·</span> {w.capacity} seats</>}</div><Link to={`/workshops/${w._id}`} className="rounded-full bg-[#edf3ec] px-4 py-2 text-sm font-semibold text-[#315a42] no-underline group-hover:bg-[#1c4836] group-hover:text-white">Explore →</Link></div>
         {user?.role === 'admin' && <div className="mt-3 flex gap-4 text-xs"><Link className="text-[#8a7352] no-underline" to={`/workshops/${w._id}/edit`}>Edit workshop</Link><button onClick={()=>setDeleteTarget(w)} className="text-red-600">Delete</button></div>}</div></article>;
     })}</div>}
     <footer className="mt-16 border-t border-[#e1e7df] pt-6 text-center text-xs text-[#98a198]">Gatherspace · Learn something worth sharing</footer>

@@ -16,10 +16,11 @@ A RESTful backend API for discovering workshops and managing member registration
 
 ### Workshops
 
-- Public workshop listing and detail endpoints
-- Case-insensitive search by name, description, instructor, or location using `?search=`
+- Public workshop listing and detail endpoints show all active workshops, including past workshops; registrations are closed after the workshop date
+- Case-insensitive search by name, description, instructor, or location using `?search=`; filter by category using `?category=`
 - Admin-only create, update, and delete operations
-- Workshop fields: name, description, instructor, workshop date, location, capacity, and active status
+- Workshop fields: name, description, instructor, category, workshop date, location, capacity, and active status
+- Categories: `Technology`, `Design`, `Business`, `Creative`, `Wellness`, and `Other` (default)
 - Workshop dates must be real calendar dates in `YYYY-MM-DD` format and cannot precede today in UTC
 - Capacity must be a positive integer and cannot be reduced below the existing registration count
 - Workshop deletion is a soft delete; registration history remains available
@@ -113,7 +114,7 @@ The API runs on `http://localhost:5000` by default. Change `PORT` if another pro
 - `POST /api/v1/auth/login`
 - `GET /api/v1/auth/me`
 - `GET /api/v1/auth/logout`
-- `GET /api/v1/workshops` (public; optional `?search=photography`)
+- `GET /api/v1/workshops` (public; optional `?search=photography` and `?category=Creative`)
 - `GET /api/v1/workshops/:id` (public)
 - `POST /api/v1/workshops` (admin)
 - `PUT /api/v1/workshops/:id` (admin)
@@ -133,6 +134,7 @@ Successful responses use `{ success: true, data }`, with `count` for lists. Regi
   "name": "Introduction to Photography",
   "description": "Learn practical camera skills",
   "instructor": "Example Instructor",
+  "category": "Creative",
   "workshopDate": "2026-12-01",
   "location": "Training room A",
   "capacity": 20
