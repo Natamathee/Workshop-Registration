@@ -160,7 +160,8 @@ app.use(
 app.use(hpp());
 app.use(rateLimit({
   windowMs: 10 * 60 * 1000,
-  limit: 100,
+  limit: 500,
+  keyGenerator: (req) => req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip,
   message: {
     success: false,
     error: "Too many requests from this IP, please try again later.",
